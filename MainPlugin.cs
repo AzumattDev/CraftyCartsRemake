@@ -11,14 +11,19 @@ using UnityEngine;
 
 namespace CraftyCartsRemake
 {
-    [BepInPlugin("com.rolopogo.CraftyCarts", "CraftyCarts", "2.1.0")]
+    [BepInPlugin(PluginId, PluginName, version)]
     public class CCR : BaseUnityPlugin
     {
+        public const string version = "2.1.0";
+        public const string PluginId = "com.rolopogo.CraftyCarts";
+        public const string Author = "Azumatt";
+        public const string PluginName = "CraftyCarts";
         private static CCR instance;
         private static GameObject? _prefabRoot;
         private static Action? _onAfterInit;
         private ConfigEntry<bool>? _enabledConfig;
         private static ConfigEntry<float>? _cartweight;
+        private static ConfigEntry<int>? _nexusID;
         public static ManualLogSource? Log { get; private set; }
 
         public void Awake()
@@ -27,6 +32,7 @@ namespace CraftyCartsRemake
             Log = Logger;
             _enabledConfig = Config.Bind("General", "Enabled", true, "Enables CraftyCarts");
             _cartweight = Config.Bind("General", "Cart Weight", 0.3f, "Modifies the weight of the carts by changing the center of mass on the RigidBody of the object. Default formula is Vector3.up * 0.3f.");
+            _nexusID = Config.Bind("General", "NexusID", 1576, "Nexus mod ID for updates");
 
             if (!_enabledConfig.Value) return;
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), "rolopogo.CraftyCarts");
