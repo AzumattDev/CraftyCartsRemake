@@ -19,8 +19,8 @@ namespace CraftyCartsRemake.Utilities
             if (originalMaterials == null) GetAllMaterials();
 
             foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>(true))
-                for (int i = 0; i < renderer.materials.Length; i++)
-                    if (renderer.materials[i].name.StartsWith("_REPLACE_"))
+                foreach (var t in renderer.materials)
+                    if (t.name.StartsWith("_REPLACE_"))
                     {
                         var matName = renderer.material.name.Replace(" (Instance)", string.Empty)
                             .Replace("_REPLACE_", "");

@@ -189,11 +189,12 @@ namespace CraftyCartsRemake
         }
 
         [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
-        public static class CCRObjectDB_Awake_Patch
+        public static class CcrObjectDBAwakePatch
         {
             public static void Postfix(ObjectDB __instance)
             {
-                if (__instance.m_items.Count <= 0) return;
+                if (__instance == null || __instance.m_items.Count == 0 ||
+                    __instance.GetItemPrefab("Amber") == null) return;
                 _onAfterInit.SafeInvoke();
                 _onAfterInit = null;
             }

@@ -179,13 +179,13 @@ namespace CraftyCartsRemake.Utilities
         }
 
         //Returns a constructor with the specified parameters to the specified type or object
-        public static object InvokeConstructor(this object obj, params object[] constructorParams)
+        public static object? InvokeConstructor(this object obj, params object[] constructorParams)
         {
             Type[] types = new Type[constructorParams.Length];
             for (int i = 0; i < constructorParams.Length; i++) types[i] = constructorParams[i].GetType();
             return (obj is Type ? (Type)obj : obj.GetType())
                 .GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, types, null)
-                .Invoke(constructorParams);
+                ?.Invoke(constructorParams);
         }
 
         //Returns a Type object which can be used to invoke static methods with the above helpers
@@ -214,12 +214,12 @@ namespace CraftyCartsRemake.Utilities
 
         //Returns a list of classes in a namespace
         //TODO: Check up on time complexity here, could potentially be parallelized
-        public static IEnumerable<string> ListClassesInNamespace(string ns)
+        public static IEnumerable<string>? ListClassesInNamespace(string ns)
         {
             //For each loaded assembly
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 //If the assembly contains the desired namespace
-                if (assembly.GetTypes().Where(t => t.Namespace == ns).Any())
+                if (assembly.GetTypes().Any(t => t.Namespace == ns))
                     //Select the types we want from the namespace and return them
                     return assembly.GetTypes()
                         .Where(t => t.IsClass)
@@ -228,10 +228,10 @@ namespace CraftyCartsRemake.Utilities
         }
 
         //(Created by taz?) Copies a component to a destination object, keeping all its field values?
-        public static Behaviour CopyComponent(Behaviour original, Type originalType, Type overridingType,
+        public static Behaviour? CopyComponent(Behaviour original, Type originalType, Type overridingType,
             GameObject destination)
         {
-            Behaviour copy = null;
+            Behaviour? copy = null;
 
             try
             {
@@ -241,7 +241,7 @@ namespace CraftyCartsRemake.Utilities
             {
             }
 
-            copy.enabled = false;
+            copy!.enabled = false;
 
             //Copy types of super classes as well as our class
             Type type = originalType;
@@ -256,7 +256,7 @@ namespace CraftyCartsRemake.Utilities
         }
 
         //(Created by taz?) Copies a Component of Type type, and all its fields
-        private static void CopyForType(Type type, Component source, Component destination)
+        private static void CopyForType(Type type, Component source, Component? destination)
         {
             FieldInfo[] myObjectFields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public |
                                                         BindingFlags.Instance | BindingFlags.GetField |
