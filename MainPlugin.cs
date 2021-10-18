@@ -11,20 +11,22 @@ using UnityEngine;
 
 namespace CraftyCartsRemake
 {
-    [BepInPlugin("com.rolopogo.CraftyCarts", "CraftyCarts", "2.0.0")]
+    [BepInPlugin("com.rolopogo.CraftyCarts", "CraftyCarts", "2.1.0")]
     public class CCR : BaseUnityPlugin
     {
         private static CCR instance;
         private static GameObject? _prefabRoot;
         private static Action? _onAfterInit;
         private ConfigEntry<bool>? _enabledConfig;
+        private static ConfigEntry<float>? _cartweight;
         public static ManualLogSource? Log { get; private set; }
 
-        private void Awake()
+        public void Awake()
         {
             instance = this;
             Log = Logger;
             _enabledConfig = Config.Bind("General", "Enabled", true, "Enables CraftyCarts");
+            _cartweight = Config.Bind("General", "Cart Weight", 0.3f, "Modifies the weight of the carts by changing the center of mass on the RigidBody of the object. Default formula is Vector3.up * 0.3f.");
 
             if (!_enabledConfig.Value) return;
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), "rolopogo.CraftyCarts");
@@ -124,7 +126,7 @@ namespace CraftyCartsRemake
             wbWNT.m_fragmentRoots = new[] { modelInstance.transform.Find("cart_Destruction").gameObject };
 
             var rb = cart.GetComponent<Rigidbody>();
-            rb.centerOfMass = Vector3.up * 0.3f;
+            rb.centerOfMass = Vector3.up * _cartweight.Value;
 
             Debug.Log("fix vagon");
             var vagon = cart.GetComponent<Vagon>();
