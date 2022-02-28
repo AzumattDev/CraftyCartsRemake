@@ -25,7 +25,6 @@ namespace CraftyCartsRemake
         public const string ModGUID = "azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
-        private static CCR instance;
         private readonly Harmony _harmony = new(ModGUID);
 
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -100,7 +99,6 @@ namespace CraftyCartsRemake
         #region ConfigOptions
 
         private static ConfigEntry<bool>? _serverConfigLocked;
-        private static ConfigEntry<bool>? _modEnabled;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
