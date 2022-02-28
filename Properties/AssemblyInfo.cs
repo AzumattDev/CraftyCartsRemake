@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CraftyCartsRemake")]
+[assembly: AssemblyTitle(CraftyCartsRemake.CCR.ModName)]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Azumatt/RoloPogo")]
-[assembly: AssemblyProduct("CraftyCartsRemake")]
+[assembly: AssemblyProduct(CraftyCartsRemake.CCR.ModName)]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion(CraftyCartsRemake.CCR.version)]
-[assembly: AssemblyFileVersion(CraftyCartsRemake.CCR.version)]
+[assembly: AssemblyVersion(CraftyCartsRemake.CCR.ModVersion)]
+[assembly: AssemblyFileVersion(CraftyCartsRemake.CCR.ModVersion)]

@@ -1,5 +1,6 @@
-bin/
-obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+bin
+obj
+/packages
+CraftyCartsRemake.sln.DotSettings.user
+.idea
+.vs
