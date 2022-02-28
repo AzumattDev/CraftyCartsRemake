@@ -41,13 +41,13 @@ namespace CraftyCartsRemake
             _serverConfigLocked = config("General", "Force Server Config", true, "Force Server Config");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
-            BuildPiece merchantCart = new("craftycarts", "forge_cart");
-            merchantCart.Name.English("Forge Cart");
-            merchantCart.Description.English("Mobile Forge");
-            merchantCart.RequiredItems.Add("Stone", 4, true);
-            merchantCart.RequiredItems.Add("Coal", 4, true);
-            merchantCart.RequiredItems.Add("Wood", 10, true);
-            merchantCart.RequiredItems.Add("Copper", 6, true);
+            BuildPiece forgecart = new("craftycarts", "forge_cart");
+            forgecart.Name.English("Forge Cart");
+            forgecart.Description.English("Mobile Forge");
+            forgecart.RequiredItems.Add("Stone", 4, true);
+            forgecart.RequiredItems.Add("Coal", 4, true);
+            forgecart.RequiredItems.Add("Wood", 10, true);
+            forgecart.RequiredItems.Add("Copper", 6, true);
 
             BuildPiece stoneCart = new("craftycarts", "stone_cart");
             stoneCart.Name.English("Stonecutter Cart");
