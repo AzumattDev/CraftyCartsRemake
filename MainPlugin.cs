@@ -27,6 +27,11 @@ namespace CraftyCartsRemake
         public const string ModName = "CraftyCarts";
         private readonly Harmony _harmony = new(ModGUID);
 
+        internal static BuildPiece forgeCart;
+        internal static BuildPiece stoneCart;
+        internal static BuildPiece workbenchCart;
+
+
         private static string ConfigFileName = ModGUID + ".cfg";
         private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
 
@@ -41,22 +46,22 @@ namespace CraftyCartsRemake
             _serverConfigLocked = config("General", "Force Server Config", true, "Force Server Config");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
-            BuildPiece forgecart = new("craftycarts", "forge_cart");
-            forgecart.Name.English("Forge Cart");
-            forgecart.Description.English("Mobile Forge");
-            forgecart.RequiredItems.Add("Stone", 4, true);
-            forgecart.RequiredItems.Add("Coal", 4, true);
-            forgecart.RequiredItems.Add("Wood", 10, true);
-            forgecart.RequiredItems.Add("Copper", 6, true);
+            forgeCart = new BuildPiece("craftycarts", "forge_cart");
+            forgeCart.Name.English("Forge Cart");
+            forgeCart.Description.English("Mobile Forge");
+            forgeCart.RequiredItems.Add("Stone", 4, true);
+            forgeCart.RequiredItems.Add("Coal", 4, true);
+            forgeCart.RequiredItems.Add("Wood", 10, true);
+            forgeCart.RequiredItems.Add("Copper", 6, true);
 
-            BuildPiece stoneCart = new("craftycarts", "stone_cart");
+            stoneCart = new BuildPiece("craftycarts", "stone_cart");
             stoneCart.Name.English("Stonecutter Cart");
             stoneCart.Description.English("Mobile Stone Cutter");
             stoneCart.RequiredItems.Add("Wood", 10, true);
             stoneCart.RequiredItems.Add("Iron", 2, true);
             stoneCart.RequiredItems.Add("Stone", 4, true);
 
-            BuildPiece workbenchCart = new("craftycarts", "workbench_cart");
+            workbenchCart = new BuildPiece("craftycarts", "workbench_cart");
             workbenchCart.Name.English("Workbench Cart");
             workbenchCart.Description.English("Mobile Workbench");
             workbenchCart.RequiredItems.Add("Wood", 10, true);
@@ -129,5 +134,43 @@ namespace CraftyCartsRemake
         }
 
         #endregion
+
+
+
+        [HarmonyPatch(typeof(CraftingStation), nameof(CraftingStation.Start))]
+        static class CraftingStation_Start_Patch
+        {
+            static void Postfix(CraftingStation __instance, ref List<CraftingStation> ___m_allStations)
+            {
+                CCRLogger.LogWarning($"Instance name {__instance.name}");
+
+                if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
+                    or "workbench_cart_craftingstation")
+                {
+                    CCRLogger.LogWarning($"Instance name AFTER CHECK {__instance.name}");
+                    CCRLogger.LogWarning($"Instance ROOT name {__instance.transform.root.name}");
+                    if (___m_allStations.Contains(__instance)) return;
+                    CCRLogger.LogWarning($"Adding {__instance.name}");
+                    CCRLogger.LogWarning($"Adding ROOT {__instance.transform.root.name}");
+                    ___m_allStations.Add(__instance);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(CraftingStation), nameof(CraftingStation.FixedUpdate))]
+        static class CCRCraftingStation_FixedUpdate_Patch
+        {
+            static void Postfix(CraftingStation __instance, ref float ___m_useTimer,
+                ref float ___m_updateExtensionTimer, GameObject ___m_inUseObject)
+            {
+                if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
+                    or "workbench_cart_craftingstation")
+                {
+                    ___m_useTimer += Time.fixedDeltaTime;
+                    ___m_updateExtensionTimer += Time.fixedDeltaTime;
+                    if (___m_inUseObject) ___m_inUseObject.SetActive(___m_useTimer < 1f);
+                }
+            }
+        }
     }
 }
