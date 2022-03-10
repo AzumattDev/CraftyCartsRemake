@@ -147,11 +147,11 @@ namespace CraftyCartsRemake
                 if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
                     or "workbench_cart_craftingstation")
                 {
-                    CCRLogger.LogWarning($"Instance name AFTER CHECK {__instance.name}");
-                    CCRLogger.LogWarning($"Instance ROOT name {__instance.transform.root.name}");
+                    CCRLogger.LogDebug($"Instance name AFTER CHECK {__instance.name}");
+                    CCRLogger.LogDebug($"Instance ROOT name {__instance.transform.root.name}");
                     if (___m_allStations.Contains(__instance)) return;
-                    CCRLogger.LogWarning($"Adding {__instance.name}");
-                    CCRLogger.LogWarning($"Adding ROOT {__instance.transform.root.name}");
+                    CCRLogger.LogDebug($"Adding {__instance.name}");
+                    CCRLogger.LogDebug($"Adding ROOT {__instance.transform.root.name}");
                     ___m_allStations.Add(__instance);
                 }
             }
