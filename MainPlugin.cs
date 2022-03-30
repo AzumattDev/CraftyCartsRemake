@@ -135,24 +135,32 @@ namespace CraftyCartsRemake
 
         #endregion
 
-
-
         [HarmonyPatch(typeof(CraftingStation), nameof(CraftingStation.Start))]
         static class CraftingStation_Start_Patch
         {
+            [UsedImplicitly]
             static void Postfix(CraftingStation __instance, ref List<CraftingStation> ___m_allStations)
             {
-                CCRLogger.LogWarning($"Instance name {__instance.name}");
+                CCRLogger.LogDebug($"Instance name {__instance.name}");
 
-                if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
-                    or "workbench_cart_craftingstation")
+                if (__instance.m_name.Contains("cart"))
                 {
+                    var temp =__instance.m_name.TrimEnd('_', 'c', 'a', 'r', 't');
+                    __instance.m_name = temp;
+                    if (__instance.m_name.Contains("stone"))
+                    {
+                        __instance.m_name = "$piece_stonecutter";
+                    }
+                    CCRLogger.LogDebug($"Instance m_name after Trim {__instance.m_name}");
                     CCRLogger.LogDebug($"Instance name AFTER CHECK {__instance.name}");
                     CCRLogger.LogDebug($"Instance ROOT name {__instance.transform.root.name}");
-                    if (___m_allStations.Contains(__instance)) return;
-                    CCRLogger.LogDebug($"Adding {__instance.name}");
-                    CCRLogger.LogDebug($"Adding ROOT {__instance.transform.root.name}");
-                    ___m_allStations.Add(__instance);
+                    if (!___m_allStations.Contains(__instance))
+                    {
+                        ___m_allStations.Add(__instance);
+                        CCRLogger.LogDebug($"Adding {__instance.name}");
+                        CCRLogger.LogDebug($"Adding ROOT {__instance.transform.root.name}");
+                    }
+                    
                 }
             }
         }
