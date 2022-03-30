@@ -43,11 +43,11 @@ namespace CraftyCartsRemake
 
         public void Awake()
         {
-            _serverConfigLocked = config("General", "Force Server Config", true, "Force Server Config");
-            _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
+            // _serverConfigLocked = config("General", "Force Server Config", true, "Force Server Config");
+            // _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
+            ConfigSync.IsLocked = true;
 
             forgeCart = new BuildPiece("craftycarts", "forge_cart");
-            forgeCart.Name.English("Forge Cart");
             forgeCart.Description.English("Mobile Forge");
             forgeCart.RequiredItems.Add("Stone", 4, true);
             forgeCart.RequiredItems.Add("Coal", 4, true);
@@ -55,14 +55,12 @@ namespace CraftyCartsRemake
             forgeCart.RequiredItems.Add("Copper", 6, true);
 
             stoneCart = new BuildPiece("craftycarts", "stone_cart");
-            stoneCart.Name.English("Stonecutter Cart");
             stoneCart.Description.English("Mobile Stone Cutter");
             stoneCart.RequiredItems.Add("Wood", 10, true);
             stoneCart.RequiredItems.Add("Iron", 2, true);
             stoneCart.RequiredItems.Add("Stone", 4, true);
 
             workbenchCart = new BuildPiece("craftycarts", "workbench_cart");
-            workbenchCart.Name.English("Workbench Cart");
             workbenchCart.Description.English("Mobile Workbench");
             workbenchCart.RequiredItems.Add("Wood", 10, true);
 
@@ -136,22 +134,15 @@ namespace CraftyCartsRemake
         #endregion
 
 
-
         [HarmonyPatch(typeof(CraftingStation), nameof(CraftingStation.Start))]
         static class CraftingStation_Start_Patch
         {
             static void Postfix(CraftingStation __instance, ref List<CraftingStation> ___m_allStations)
             {
-                CCRLogger.LogWarning($"Instance name {__instance.name}");
-
                 if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
                     or "workbench_cart_craftingstation")
                 {
-                    CCRLogger.LogDebug($"Instance name AFTER CHECK {__instance.name}");
-                    CCRLogger.LogDebug($"Instance ROOT name {__instance.transform.root.name}");
                     if (___m_allStations.Contains(__instance)) return;
-                    CCRLogger.LogDebug($"Adding {__instance.name}");
-                    CCRLogger.LogDebug($"Adding ROOT {__instance.transform.root.name}");
                     ___m_allStations.Add(__instance);
                 }
             }
