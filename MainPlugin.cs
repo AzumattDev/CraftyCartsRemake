@@ -64,6 +64,21 @@ namespace CraftyCartsRemake
             workbenchCart.Description.English("Mobile Workbench");
             workbenchCart.RequiredItems.Add("Wood", 10, true);
 
+            ForgecartRow = config("Forge Cart", "Inventory Rows", 5,
+                new ConfigDescription("Rows for Forge", new AcceptableValueRange<int>(2, 30)));
+            ForgecartCol = config("Forge Cart", "Inventory Columns", 8,
+                new ConfigDescription("Columns for Forge", new AcceptableValueRange<int>(2, 8)));
+
+            WorkbenchcartRow = config("Workbench Cart", "Inventory Rows", 5,
+                new ConfigDescription("Rows for Workbench", new AcceptableValueRange<int>(2, 30)));
+            WorkbenchcartCol = config("Workbench Cart", "Inventory Columns", 8,
+                new ConfigDescription("Columns for Workbench", new AcceptableValueRange<int>(2, 8)));
+
+            StonecuttercartRow = config("Stonecutter Cart", "Inventory Rows", 5,
+                new ConfigDescription("Rows for Stonecutter", new AcceptableValueRange<int>(2, 30)));
+            StonecuttercartCol = config("Stonecutter Cart", "Inventory Columns", 8,
+                new ConfigDescription("Columns for Stonecutter", new AcceptableValueRange<int>(2, 8)));
+
             _harmony.PatchAll();
             SetupWatcher();
         }
@@ -102,6 +117,13 @@ namespace CraftyCartsRemake
         #region ConfigOptions
 
         private static ConfigEntry<bool>? _serverConfigLocked;
+
+        public static ConfigEntry<int>? ForgecartRow;
+        public static ConfigEntry<int>? ForgecartCol;
+        public static ConfigEntry<int>? StonecuttercartRow;
+        public static ConfigEntry<int>? StonecuttercartCol;
+        public static ConfigEntry<int>? WorkbenchcartRow;
+        public static ConfigEntry<int>? WorkbenchcartCol;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
@@ -160,6 +182,38 @@ namespace CraftyCartsRemake
                     ___m_useTimer += Time.fixedDeltaTime;
                     ___m_updateExtensionTimer += Time.fixedDeltaTime;
                     if (___m_inUseObject) ___m_inUseObject.SetActive(___m_useTimer < 1f);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Container), nameof(Container.Awake))]
+        static class Container_Awake_Patch
+        {
+            static void Postfix(Container __instance, ref Inventory ___m_inventory)
+            {
+                if (__instance.m_nview.GetZDO() == null)
+                    return;
+                string cartName = __instance.transform.root.name.Replace("(Clone)", "").Trim();
+
+                ref int inventoryColumns = ref ___m_inventory.m_width;
+                ref int inventoryRows = ref ___m_inventory.m_height;
+                switch (cartName)
+                {
+                    // Forge Cart Storage
+                    case "forge_cart":
+                        inventoryRows = ForgecartRow.Value;
+                        inventoryColumns = ForgecartCol.Value;
+                        break;
+                    // Stonecutter Cart Storage
+                    case "stone_cart":
+                        inventoryRows = StonecuttercartRow.Value;
+                        inventoryColumns = StonecuttercartCol.Value;
+                        break;
+                    // Workbench Cart Storage
+                    case "workbench_cart":
+                        inventoryRows = WorkbenchcartRow.Value;
+                        inventoryColumns = WorkbenchcartCol.Value;
+                        break;
                 }
             }
         }
