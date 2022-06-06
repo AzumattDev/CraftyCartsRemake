@@ -21,7 +21,7 @@ namespace CraftyCartsRemake
          * It now uses the PieceManager written by me to load the carts into the world. I rebuilt the assets inside unity to have scripts there, and not having everything done inside the code.
          * This makes it a bit less buggy on the material and works more fluidly. Rolopogo is credited in the AssemblyInfo.cs file, and here. Thank you again Rolo.
          */
-        public const string ModVersion = "3.0.6";
+        public const string ModVersion = "3.0.7";
         public const string ModGUID = "azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
@@ -53,16 +53,19 @@ namespace CraftyCartsRemake
             forgeCart.RequiredItems.Add("Coal", 4, true);
             forgeCart.RequiredItems.Add("Wood", 10, true);
             forgeCart.RequiredItems.Add("Copper", 6, true);
+            forgeCart.Category.Add(BuildPieceCategory.Crafting);
 
             stoneCart = new BuildPiece("craftycarts", "stone_cart");
             stoneCart.Description.English("Mobile Stone Cutter");
             stoneCart.RequiredItems.Add("Wood", 10, true);
             stoneCart.RequiredItems.Add("Iron", 2, true);
             stoneCart.RequiredItems.Add("Stone", 4, true);
+            stoneCart.Category.Add(BuildPieceCategory.Crafting);
 
             workbenchCart = new BuildPiece("craftycarts", "workbench_cart");
             workbenchCart.Description.English("Mobile Workbench");
             workbenchCart.RequiredItems.Add("Wood", 10, true);
+            workbenchCart.Category.Add(BuildPieceCategory.Crafting);
 
             ForgecartRow = config("Forge Cart", "Inventory Rows", 5,
                 new ConfigDescription("Rows for Forge", new AcceptableValueRange<int>(2, 30)));
