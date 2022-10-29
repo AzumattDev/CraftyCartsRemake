@@ -21,8 +21,8 @@ namespace CraftyCartsRemake
          * It now uses the PieceManager written by me to load the carts into the world. I rebuilt the assets inside unity to have scripts there, and not having everything done inside the code.
          * This makes it a bit less buggy on the material and works more fluidly. Rolopogo is credited in the AssemblyInfo.cs file, and here. Thank you again Rolo.
          */
-        public const string ModVersion = "3.0.7";
-        public const string ModGUID = "azumatt.CraftyCarts";
+        public const string ModVersion = "3.0.8";
+        public const string ModGUID = "Azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
         private readonly Harmony _harmony = new(ModGUID);
