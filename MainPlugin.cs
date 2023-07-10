@@ -21,66 +21,65 @@ namespace CraftyCartsRemake
          * It now uses the PieceManager written by me to load the carts into the world. I rebuilt the assets inside unity to have scripts there, and not having everything done inside the code.
          * This makes it a bit less buggy on the material and works more fluidly. Rolopogo is credited in the AssemblyInfo.cs file, and here. Thank you again Rolo.
          */
-        public const string ModVersion = "3.0.8";
+        public const string ModVersion = "3.1.0";
         public const string ModGUID = "Azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
         private readonly Harmony _harmony = new(ModGUID);
+        internal static string ConnectionError = "";
 
-        internal static BuildPiece forgeCart;
-        internal static BuildPiece stoneCart;
-        internal static BuildPiece workbenchCart;
+        internal static BuildPiece ForgeCart = null!;
+        internal static BuildPiece StoneCart = null!;
+        internal static BuildPiece WorkbenchCart = null!;
+        
+        internal const string ForgeCartFabName = "forge_cart";
+        internal const string StoneCartFabName = "stone_cart";
+        internal const string WorkbenchCartFabName = "workbench_cart";
+        
+        internal const string ForgeCartInstance = $"{ForgeCartFabName}_craftingstation";
+        internal const string StoneCartInstance = $"{StoneCartFabName}_craftingstation";
+        internal const string WorkbenchCartInstance = $"{WorkbenchCartFabName}_craftingstation";
 
 
-        private static string ConfigFileName = ModGUID + ".cfg";
-        private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
+        private const string ConfigFileName = ModGUID + ".cfg";
+        private static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
 
-        public static readonly ManualLogSource CCRLogger =
-            BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static readonly ManualLogSource CCRLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
 
-        private static readonly ConfigSync ConfigSync = new(ModGUID)
-            { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
+        private static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
 
         public void Awake()
         {
-            // _serverConfigLocked = config("General", "Force Server Config", true, "Force Server Config");
-            // _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
             ConfigSync.IsLocked = true;
 
-            forgeCart = new BuildPiece("craftycarts", "forge_cart");
-            forgeCart.Description.English("Mobile Forge");
-            forgeCart.RequiredItems.Add("Stone", 4, true);
-            forgeCart.RequiredItems.Add("Coal", 4, true);
-            forgeCart.RequiredItems.Add("Wood", 10, true);
-            forgeCart.RequiredItems.Add("Copper", 6, true);
-            forgeCart.Category.Add(BuildPieceCategory.Crafting);
+            ForgeCart = new BuildPiece("craftycarts", ForgeCartFabName);
+            ForgeCart.Description.English("Mobile Forge");
+            ForgeCart.RequiredItems.Add("Stone", 4, true);
+            ForgeCart.RequiredItems.Add("Coal", 4, true);
+            ForgeCart.RequiredItems.Add("Wood", 10, true);
+            ForgeCart.RequiredItems.Add("Copper", 6, true);
+            ForgeCart.Category.Set("Crafty Carts");
 
-            stoneCart = new BuildPiece("craftycarts", "stone_cart");
-            stoneCart.Description.English("Mobile Stone Cutter");
-            stoneCart.RequiredItems.Add("Wood", 10, true);
-            stoneCart.RequiredItems.Add("Iron", 2, true);
-            stoneCart.RequiredItems.Add("Stone", 4, true);
-            stoneCart.Category.Add(BuildPieceCategory.Crafting);
+            StoneCart = new BuildPiece("craftycarts", StoneCartFabName);
+            StoneCart.Description.English("Mobile Stone Cutter");
+            StoneCart.RequiredItems.Add("Wood", 10, true);
+            StoneCart.RequiredItems.Add("Iron", 2, true);
+            StoneCart.RequiredItems.Add("Stone", 4, true);
+            StoneCart.Category.Set("Crafty Carts");
 
-            workbenchCart = new BuildPiece("craftycarts", "workbench_cart");
-            workbenchCart.Description.English("Mobile Workbench");
-            workbenchCart.RequiredItems.Add("Wood", 10, true);
-            workbenchCart.Category.Add(BuildPieceCategory.Crafting);
+            WorkbenchCart = new BuildPiece("craftycarts", WorkbenchCartFabName);
+            WorkbenchCart.Description.English("Mobile Workbench");
+            WorkbenchCart.RequiredItems.Add("Wood", 10, true);
+            WorkbenchCart.Category.Set("Crafty Carts");
 
-            ForgecartRow = config("Forge Cart", "Inventory Rows", 5,
-                new ConfigDescription("Rows for Forge", new AcceptableValueRange<int>(2, 30)));
-            ForgecartCol = config("Forge Cart", "Inventory Columns", 8,
-                new ConfigDescription("Columns for Forge", new AcceptableValueRange<int>(2, 8)));
+            ForgeCartRow = config("Forge Cart", "Inventory Rows", 5, new ConfigDescription("Rows for Forge", new AcceptableValueRange<int>(2, 30)));
+            ForgeCartCol = config("Forge Cart", "Inventory Columns", 8, new ConfigDescription("Columns for Forge", new AcceptableValueRange<int>(2, 8)));
 
-            WorkbenchcartRow = config("Workbench Cart", "Inventory Rows", 5,
-                new ConfigDescription("Rows for Workbench", new AcceptableValueRange<int>(2, 30)));
-            WorkbenchcartCol = config("Workbench Cart", "Inventory Columns", 8,
-                new ConfigDescription("Columns for Workbench", new AcceptableValueRange<int>(2, 8)));
+            WorkbenchCartRow = config("Workbench Cart", "Inventory Rows", 5, new ConfigDescription("Rows for Workbench", new AcceptableValueRange<int>(2, 30)));
+            WorkbenchCartCol = config("Workbench Cart", "Inventory Columns", 8, new ConfigDescription("Columns for Workbench", new AcceptableValueRange<int>(2, 8)));
 
-            StonecuttercartRow = config("Stonecutter Cart", "Inventory Rows", 5,
-                new ConfigDescription("Rows for Stonecutter", new AcceptableValueRange<int>(2, 30)));
-            StonecuttercartCol = config("Stonecutter Cart", "Inventory Columns", 8,
-                new ConfigDescription("Columns for Stonecutter", new AcceptableValueRange<int>(2, 8)));
+            StonecutterCartRow = config("Stonecutter Cart", "Inventory Rows", 5, new ConfigDescription("Rows for Stonecutter", new AcceptableValueRange<int>(2, 30)));
+            StonecutterCartCol = config("Stonecutter Cart", "Inventory Columns", 8, new ConfigDescription("Columns for Stonecutter", new AcceptableValueRange<int>(2, 8)));
 
             _harmony.PatchAll();
             SetupWatcher();
@@ -119,14 +118,12 @@ namespace CraftyCartsRemake
 
         #region ConfigOptions
 
-        private static ConfigEntry<bool>? _serverConfigLocked;
-
-        public static ConfigEntry<int>? ForgecartRow;
-        public static ConfigEntry<int>? ForgecartCol;
-        public static ConfigEntry<int>? StonecuttercartRow;
-        public static ConfigEntry<int>? StonecuttercartCol;
-        public static ConfigEntry<int>? WorkbenchcartRow;
-        public static ConfigEntry<int>? WorkbenchcartCol;
+        public static ConfigEntry<int> ForgeCartRow = null!;
+        public static ConfigEntry<int> ForgeCartCol = null!;
+        public static ConfigEntry<int> StonecutterCartRow = null!;
+        public static ConfigEntry<int> StonecutterCartCol = null!;
+        public static ConfigEntry<int> WorkbenchCartRow = null!;
+        public static ConfigEntry<int> WorkbenchCartCol = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
@@ -164,12 +161,9 @@ namespace CraftyCartsRemake
         {
             static void Postfix(CraftingStation __instance, ref List<CraftingStation> ___m_allStations)
             {
-                if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
-                    or "workbench_cart_craftingstation")
-                {
-                    if (___m_allStations.Contains(__instance)) return;
-                    ___m_allStations.Add(__instance);
-                }
+                if (__instance.name is not (ForgeCartInstance or StoneCartInstance or WorkbenchCartInstance)) return;
+                if (___m_allStations.Contains(__instance)) return;
+                ___m_allStations.Add(__instance);
             }
         }
 
@@ -179,13 +173,10 @@ namespace CraftyCartsRemake
             static void Postfix(CraftingStation __instance, ref float ___m_useTimer,
                 ref float ___m_updateExtensionTimer, GameObject ___m_inUseObject)
             {
-                if (__instance.name is "forge_cart_craftingstation" or "stone_cart_craftingstation"
-                    or "workbench_cart_craftingstation")
-                {
-                    ___m_useTimer += Time.fixedDeltaTime;
-                    ___m_updateExtensionTimer += Time.fixedDeltaTime;
-                    if (___m_inUseObject) ___m_inUseObject.SetActive(___m_useTimer < 1f);
-                }
+                if (__instance.name is not (ForgeCartInstance or StoneCartInstance or WorkbenchCartInstance)) return;
+                ___m_useTimer += Time.fixedDeltaTime;
+                ___m_updateExtensionTimer += Time.fixedDeltaTime;
+                if (___m_inUseObject) ___m_inUseObject.SetActive(___m_useTimer < 1f);
             }
         }
 
@@ -203,19 +194,19 @@ namespace CraftyCartsRemake
                 switch (cartName)
                 {
                     // Forge Cart Storage
-                    case "forge_cart":
-                        inventoryRows = ForgecartRow.Value;
-                        inventoryColumns = ForgecartCol.Value;
+                    case ForgeCartFabName:
+                        inventoryRows = ForgeCartRow.Value;
+                        inventoryColumns = ForgeCartCol.Value;
                         break;
                     // Stonecutter Cart Storage
-                    case "stone_cart":
-                        inventoryRows = StonecuttercartRow.Value;
-                        inventoryColumns = StonecuttercartCol.Value;
+                    case StoneCartFabName:
+                        inventoryRows = StonecutterCartRow.Value;
+                        inventoryColumns = StonecutterCartCol.Value;
                         break;
                     // Workbench Cart Storage
-                    case "workbench_cart":
-                        inventoryRows = WorkbenchcartRow.Value;
-                        inventoryColumns = WorkbenchcartCol.Value;
+                    case WorkbenchCartFabName:
+                        inventoryRows = WorkbenchCartRow.Value;
+                        inventoryColumns = WorkbenchCartCol.Value;
                         break;
                 }
             }
