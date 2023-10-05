@@ -51,8 +51,8 @@ namespace CraftyCartsRemake
         {
             if (__instance.m_connectionFailedPanel.activeSelf)
             {
-                __instance.m_connectionFailedError.resizeTextMaxSize = 25;
-                __instance.m_connectionFailedError.resizeTextMinSize = 15;
+                __instance.m_connectionFailedError.fontSizeMax = 25;
+                __instance.m_connectionFailedError.fontSizeMin = 15;
                 __instance.m_connectionFailedError.text += "\n" + CCR.ConnectionError;
             }
         }

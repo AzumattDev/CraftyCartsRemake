@@ -1,4 +1,4 @@
-﻿### 3.1.0
+### 3.1.0
 - Update to use the latest BepInEx, Valheim Version,  and ServerSync as references.
 - Update to my latest PieceManager code.
 - Update the carts to use the "Crafty Carts" category in the build menu by default now.

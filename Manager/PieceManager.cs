@@ -12,6 +12,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using JetBrains.Annotations;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -284,7 +285,7 @@ public class BuildPiece
                 PieceConfig cfg = pieceConfigs[piece] = new PieceConfig();
                 Piece piecePrefab = piece.Prefab.GetComponent<Piece>();
                 string pieceName = piecePrefab.m_name;
-                string englishName = new Regex("['[\"\\]]").Replace(english.Localize(pieceName), "").Trim();
+                string englishName = new Regex(@"[=\n\t\\""\'\[\]]*").Replace(english.Localize(pieceName), "").Trim();
                 string localizedName = Localization.instance.Localize(pieceName).Trim();
 
                 int order = 0;
@@ -507,7 +508,7 @@ public class BuildPiece
                         Piece.Requirement[] requirements =
                             SerializedRequirements.toPieceReqs(new SerializedRequirements(cfg.craft.Value));
                         piecePrefab.m_resources = requirements;
-                        foreach (Piece instantiatedPiece in Object.FindObjectsOfType<Piece>())
+                        foreach (Piece instantiatedPiece in UnityEngine.Object.FindObjectsOfType<Piece>())
                         {
                             if (instantiatedPiece.m_name == pieceName)
                             {
@@ -622,8 +623,7 @@ public class BuildPiece
         }
     }
 
-    public void Snapshot(float lightIntensity = 1.3f, Quaternion? cameraRotation = null) =>
-        SnapshotPiece(Prefab, lightIntensity, cameraRotation);
+    public void Snapshot(float lightIntensity = 1.3f, Quaternion? cameraRotation = null) => SnapshotPiece(Prefab, lightIntensity, cameraRotation);
 
     internal void SnapshotPiece(GameObject prefab, float lightIntensity = 1.3f, Quaternion? cameraRotation = null)
     {
@@ -693,8 +693,7 @@ public class BuildPiece
 
         RenderTexture.active = currentRenderTexture;
 
-        prefab.GetComponent<Piece>().m_icon = Sprite.Create(previewImage,
-            new Rect(0, 0, (int)rect.width, (int)rect.height), Vector2.one / 2f);
+        prefab.GetComponent<Piece>().m_icon = Sprite.Create(previewImage, new Rect(0, 0, (int)rect.width, (int)rect.height), Vector2.one / 2f);
         sideLight.gameObject.SetActive(false);
         camera.targetTexture.Release();
         camera.gameObject.SetActive(false);
@@ -1034,13 +1033,11 @@ public class AdminSyncing
         {
             if (isServer)
             {
-                ZRoutedRpc.instance.Register<ZPackage>(BuildPiece._plugin.Info.Metadata.Name + " PMAdminStatusSync",
-                    RPC_AdminPieceAddRemove);
+                ZRoutedRpc.instance.Register<ZPackage>(BuildPiece._plugin.Info.Metadata.Name + " PMAdminStatusSync", RPC_AdminPieceAddRemove);
             }
             else if (!registeredOnClient)
             {
-                ZRoutedRpc.instance.Register<ZPackage>(BuildPiece._plugin.Info.Metadata.Name + " PMAdminStatusSync",
-                    RPC_AdminPieceAddRemove);
+                ZRoutedRpc.instance.Register<ZPackage>(BuildPiece._plugin.Info.Metadata.Name + " PMAdminStatusSync", RPC_AdminPieceAddRemove);
                 registeredOnClient = true;
             }
         }
@@ -1232,73 +1229,27 @@ public static class PiecePrefabManager
     static PiecePrefabManager()
     {
         Harmony harmony = new("org.bepinex.helpers.PieceManager");
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(FejdStartup), nameof(FejdStartup.Awake)),
-            new HarmonyMethod(AccessTools.DeclaredMethod(typeof(BuildPiece),
-                nameof(BuildPiece.Patch_FejdStartup))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)),
-            new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_ZNetSceneAwake))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(FejdStartup), nameof(FejdStartup.Awake)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(BuildPiece), nameof(BuildPiece.Patch_FejdStartup))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Localization), nameof(Localization.LoadCSV)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(LocalizeKey), nameof(LocalizeKey.AddLocalizedKeys))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Localization), nameof(Localization.SetupLanguage)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(LocalizationCache), nameof(LocalizationCache.LocalizationPostfix))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_ObjectDBInit))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(BuildPiece), nameof(BuildPiece.Patch_ObjectDBInit))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_ObjectDBInit))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNet), nameof(ZNet.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(AdminSyncing), nameof(AdminSyncing.AdminStatusSync))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_ZNetSceneAwake))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(RefFixPatch_ZNetSceneAwake))));
 
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.UpdateAvailable)),
-            transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(UpdateAvailable_Transpiler))));
-
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.UpdateAvailable)),
-            prefix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(UpdateAvailable_Prefix))),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(UpdateAvailable_Postfix))));
-
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.NextCategory)),
-            transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(NextCategory_Transpiler))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.PrevCategory)),
-            transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(PrevCategory_Transpiler))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.SetCategory)),
-            transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(SetCategory_Transpiler))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Hud), nameof(Hud.Awake)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Hud_AwakeCreateTabs))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Enum), nameof(Enum.GetValues)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(EnumGetValuesPatch))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Enum), nameof(Enum.GetNames)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(EnumGetNamesPatch))));
-
-
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(RefFixPatch_ZNetSceneAwake))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNet), nameof(ZNet.Awake)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(AdminSyncing),
-                nameof(AdminSyncing.AdminStatusSync))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.Awake)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_ObjectDBInit))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_ObjectDBInit))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(ObjectDB), nameof(ObjectDB.Awake)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(BuildPiece),
-                nameof(BuildPiece.Patch_ObjectDBInit))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Localization), nameof(Localization.SetupLanguage)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(LocalizationCache),
-                nameof(LocalizationCache.LocalizationPostfix))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Localization), nameof(Localization.LoadCSV)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(LocalizeKey),
-                nameof(LocalizeKey.AddLocalizedKeys))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.PrevCategory)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_PieceTable_PrevCategory))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.NextCategory)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_PieceTable_NextCategory))));
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Player), nameof(Player.SetPlaceMode)),
-            postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager),
-                nameof(Patch_SetPlaceMode))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.PrevCategory)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_PieceTable_PrevCategory))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.PrevCategory)), transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(PrevCategory_Transpiler))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.NextCategory)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_PieceTable_NextCategory))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.NextCategory)), transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(NextCategory_Transpiler))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.SetCategory)), transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(SetCategory_Transpiler))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.UpdateAvailable)), transpiler: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(UpdateAvailable_Transpiler))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(PieceTable), nameof(PieceTable.UpdateAvailable)), prefix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(UpdateAvailable_Prefix))), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(UpdateAvailable_Postfix))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Player), nameof(Player.SetPlaceMode)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Patch_SetPlaceMode))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Hud), nameof(Hud.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(Hud_AwakeCreateTabs))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Enum), nameof(Enum.GetValues)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(EnumGetValuesPatch))));
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Enum), nameof(Enum.GetNames)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(PiecePrefabManager), nameof(EnumGetNamesPatch))));
     }
 
     private struct BundleId
@@ -1333,7 +1284,7 @@ public static class PiecePrefabManager
     private static readonly List<GameObject> piecePrefabs = new();
     private static readonly Dictionary<string, Piece.PieceCategory> PieceCategories = new();
     private static readonly Dictionary<string, Piece.PieceCategory> OtherPieceCategories = new();
-    private static string hiddenCategoryMagic = "(HiddenCategory)";
+    private const string _hiddenCategoryMagic = "(HiddenCategory)";
 
     public static GameObject RegisterPrefab(
         string assetBundleFileName,
@@ -1345,10 +1296,10 @@ public static class PiecePrefabManager
     {
         GameObject prefab = assets.LoadAsset<GameObject>(prefabName);
 
-        /*foreach (GameObject gameObject in FixRefs(assets))
-        {
-            MaterialReplacer.RegisterGameObjectForShaderSwap(gameObject, MaterialReplacer.ShaderType.UseUnityShader);
-        }*/
+       //foreach (GameObject gameObject in FixRefs(assets))
+       //{
+       //    MaterialReplacer.RegisterGameObjectForShaderSwap(gameObject, MaterialReplacer.ShaderType.UseUnityShader);
+       //}
 
         piecePrefabs.Add(prefab);
 
@@ -1488,16 +1439,16 @@ public static class PiecePrefabManager
         newTab.SetActive(false);
         newTab.GetOrAddComponent<UIInputHandler>().m_onLeftDown += Hud.instance.OnLeftClickCategory;
 
-        foreach (var text in newTab.GetComponentsInChildren<Text>())
+        foreach (var text in newTab.GetComponentsInChildren<TMP_Text>())
         {
             text.rectTransform.offsetMin = new Vector2(3, 1);
             text.rectTransform.offsetMax = new Vector2(-3, -1);
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 12;
-            text.resizeTextMaxSize = 20;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 12;
+            text.fontSizeMax = 20;
             text.lineSpacing = 0.8f;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Truncate;
         }
 
         return newTab;
@@ -1599,7 +1550,7 @@ public static class PiecePrefabManager
             }
         }
 
-        RectTransform background = (RectTransform)selectionWindow.Find("Bkg2")?.transform;
+        RectTransform? background = (RectTransform)selectionWindow.Find("Bkg2")?.transform!;
 
         if (background)
         {
@@ -1642,11 +1593,11 @@ public static class PiecePrefabManager
 
         if (active)
         {
-            tab.name = tabName.Replace(hiddenCategoryMagic, "");
+            tab.name = tabName.Replace(_hiddenCategoryMagic, "");
         }
         else
         {
-            tab.name = $"{tabName}{hiddenCategoryMagic}";
+            tab.name = $"{tabName}{_hiddenCategoryMagic}";
         }
     }
 
@@ -1674,7 +1625,7 @@ public static class PiecePrefabManager
 
         var selectedTab = Hud.instance.m_pieceCategoryTabs[(int)__instance.m_selectedCategory];
 
-        if (selectedTab.name.Contains(hiddenCategoryMagic))
+        if (selectedTab.name.Contains(_hiddenCategoryMagic))
         {
             __instance.NextCategory();
         }
@@ -1689,7 +1640,7 @@ public static class PiecePrefabManager
 
         var selectedTab = Hud.instance.m_pieceCategoryTabs[(int)__instance.m_selectedCategory];
 
-        if (selectedTab.name.Contains(hiddenCategoryMagic))
+        if (selectedTab.name.Contains(_hiddenCategoryMagic))
         {
             __instance.PrevCategory();
         }
