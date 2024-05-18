@@ -21,7 +21,6 @@ namespace CraftyCartsRemake
             CCR.CCRLogger.LogInfo("Invoking version check");
             ZPackage zpackage = new();
             zpackage.Write(CCR.ModVersion);
-            zpackage.Write(RpcHandlers.ComputeHashForMod().Replace("-", ""));
             peer.m_rpc.Invoke($"{CCR.ModName}_VersionCheck", zpackage);
         }
     }
@@ -77,14 +76,11 @@ namespace CraftyCartsRemake
         public static void RPC_Recycle_N_Reclaim_Version(ZRpc rpc, ZPackage pkg)
         {
             string? version = pkg.ReadString();
-            string? hash = pkg.ReadString();
 
-            var hashForAssembly = ComputeHashForMod().Replace("-", "");
-
-            CCR.CCRLogger.LogInfo($"Hash/Version check, local: {CCR.ModVersion} {hashForAssembly} remote: {version} {hash}");
-            if (hash != hashForAssembly || version != CCR.ModVersion)
+            CCR.CCRLogger.LogInfo($"Hash/Version check, local: {CCR.ModVersion} remote: {version}");
+            if (version != CCR.ModVersion)
             {
-                CCR.ConnectionError = $"{CCR.ModName} Installed: {CCR.ModVersion} {hashForAssembly}\n Needed: {version} {hash}";
+                CCR.ConnectionError = $"{CCR.ModName} Installed: {CCR.ModVersion}\n Needed: {version}";
                 if (!ZNet.instance.IsServer()) return;
                 // Different versions - force disconnect client from server
                 CCR.CCRLogger.LogWarning($"Peer ({rpc.m_socket.GetHostName()}) has incompatible version, disconnecting...");
@@ -104,21 +100,6 @@ namespace CraftyCartsRemake
                     ValidatedPeers.Add(rpc);
                 }
             }
-        }
-
-        public static string ComputeHashForMod()
-        {
-            using SHA256 sha256Hash = SHA256.Create();
-            // ComputeHash - returns byte array  
-            byte[] bytes = sha256Hash.ComputeHash(File.ReadAllBytes(Assembly.GetExecutingAssembly().Location));
-            // Convert byte array to a string   
-            StringBuilder builder = new();
-            foreach (byte b in bytes)
-            {
-                builder.Append(b.ToString("X2"));
-            }
-
-            return builder.ToString();
         }
     }
 }

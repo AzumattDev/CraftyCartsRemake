@@ -1,3 +1,6 @@
+### 3.1.2
+- Update for Ashlands
+- Update internal code to use the latest PieceManager code as well as some fixes to patches.
 ### 3.1.0
 - Update to use the latest BepInEx, Valheim Version,  and ServerSync as references.
 - Update to my latest PieceManager code.
