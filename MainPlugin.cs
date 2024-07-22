@@ -21,7 +21,7 @@ namespace CraftyCartsRemake
          * It now uses the PieceManager written by me to load the carts into the world. I rebuilt the assets inside unity to have scripts there, and not having everything done inside the code.
          * This makes it a bit less buggy on the material and works more fluidly. Rolopogo is credited in the AssemblyInfo.cs file, and here. Thank you again Rolo.
          */
-        public const string ModVersion = "3.1.2";
+        public const string ModVersion = "3.1.3";
         public const string ModGUID = "Azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
@@ -31,11 +31,11 @@ namespace CraftyCartsRemake
         internal static BuildPiece ForgeCart = null!;
         internal static BuildPiece StoneCart = null!;
         internal static BuildPiece WorkbenchCart = null!;
-        
+
         internal const string ForgeCartFabName = "forge_cart";
         internal const string StoneCartFabName = "stone_cart";
         internal const string WorkbenchCartFabName = "workbench_cart";
-        
+
         internal const string ForgeCartInstance = $"{ForgeCartFabName}_craftingstation";
         internal const string StoneCartInstance = $"{StoneCartFabName}_craftingstation";
         internal const string WorkbenchCartInstance = $"{WorkbenchCartFabName}_craftingstation";
@@ -209,6 +209,18 @@ namespace CraftyCartsRemake
                         inventoryColumns = WorkbenchCartCol.Value;
                         break;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.CollideRay2))]
+        [HarmonyPriority(Priority.VeryHigh)]
+        public class NoCameraClippingWithCart
+        {
+            bool Prefix() => !(Player.m_localPlayer && IsPlayerAttachedToVagon(Player.m_localPlayer));
+
+            private static bool IsPlayerAttachedToVagon(Character player)
+            {
+                return Vagon.m_instances.Any(vagon => vagon.IsAttached(player));
             }
         }
     }
