@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -21,7 +22,7 @@ namespace CraftyCartsRemake
          * It now uses the PieceManager written by me to load the carts into the world. I rebuilt the assets inside unity to have scripts there, and not having everything done inside the code.
          * This makes it a bit less buggy on the material and works more fluidly. Rolopogo is credited in the AssemblyInfo.cs file, and here. Thank you again Rolo.
          */
-        public const string ModVersion = "3.1.3";
+        public const string ModVersion = "3.1.4";
         public const string ModGUID = "Azumatt.CraftyCarts";
         public const string Author = "Azumatt";
         public const string ModName = "CraftyCarts";
@@ -216,9 +217,9 @@ namespace CraftyCartsRemake
         [HarmonyPriority(Priority.VeryHigh)]
         public class NoCameraClippingWithCart
         {
-            bool Prefix() => !(Player.m_localPlayer && IsPlayerAttachedToVagon(Player.m_localPlayer));
+            static bool Prefix() => !(Player.m_localPlayer && IsPlayerAttachedToVagon(Player.m_localPlayer));
 
-            private static bool IsPlayerAttachedToVagon(Character player)
+            internal static bool IsPlayerAttachedToVagon(Character player)
             {
                 return Vagon.m_instances.Any(vagon => vagon.IsAttached(player));
             }
