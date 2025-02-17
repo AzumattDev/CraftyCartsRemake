@@ -1,0 +1,5 @@
+msg_cartupgraded: "$1 has been upgraded"
+msg_cantupgrade: "$1 can't be upgraded"
+msg_maxlevel: "$1 is already at max level"
+piece_upgradecart: "Upgrade Cart"
+piece_upgradecart_description: "Upgrade your cart to a higher level"
