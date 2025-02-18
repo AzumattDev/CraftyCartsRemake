@@ -1,3 +1,5 @@
+### 3.1.9
+- Fix sign issue with vanilla signs
 ### 3.1.8
 - Reduce the internal asset bundle size
 - Increase the health of all carts by 300% of their existing values. This should help with Ashlands environment damaging and other things one-tapping them during poor network with other players. Additionally, make the Black Forge Cart resistant to Ashlands damage.
@@ -9,7 +11,7 @@
 - When you upgrade a cart, there is a message that will display above the cart to confirm the upgrade.
 - Make some changes so that only the current network owner of the cart is trying to update the anti-tipping system. This should hopefully prevent issues if someone with a high ping is trying to update the cart.
 - [Code refactor] Move my patches out of the main plugin and into a separate file.
-- Working on more carts (cartography, Mage table, etc)
+- Working on more carts (Cartography, Mage table, etc)
 ### 3.1.7
 - Fix issue with a patch that would cause spam on world loading in.
 - Fix LOD issue, hover text, and animation state with Cauldron cart.

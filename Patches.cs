@@ -298,50 +298,35 @@ static class SignAwakePatch2
 {
     static void Prefix(Sign __instance)
     {
-        Transform? oldTextGameObject = Utils.FindChild(__instance.transform, "Text");
-        if (oldTextGameObject != null)
+        if (__instance.transform.parent == null || __instance.transform.parent.gameObject.name != "BumperSticker") return;
+        Transform? textGameObject = Utils.FindChild(__instance.transform, "Text");
+        if (textGameObject == null) return;
+        Text? oldTextField = textGameObject.GetComponent<Text>();
+        if (oldTextField != null)
         {
-            Text? oldTextField = oldTextGameObject.GetComponent<Text>();
-            TextMeshProUGUI? oldTextMeshProField = oldTextGameObject.GetComponent<TextMeshProUGUI>();
-            if (oldTextField != null)
-            {
-                // Create a new GameObject to hold the TextMeshProUGUI component
-                GameObject newTextMeshProGameObject = new GameObject("Text");
-                newTextMeshProGameObject.transform.SetParent(oldTextGameObject.transform.parent);
+            // Create a new GameObject to hold the TextMeshProUGUI component
+            GameObject newTextMeshProGameObject = new GameObject("Text");
+            newTextMeshProGameObject.transform.SetParent(textGameObject.transform.parent);
 
-                // Just in case she has a different scale and shit
-                Transform transform = oldTextGameObject.transform;
-                newTextMeshProGameObject.transform.localPosition = transform.localPosition;
-                newTextMeshProGameObject.transform.localRotation = transform.localRotation;
-                newTextMeshProGameObject.transform.localScale = transform.localScale;
+            // Just in case it has a different scale and shit
+            Transform transform = textGameObject.transform;
+            newTextMeshProGameObject.transform.localPosition = transform.localPosition;
+            newTextMeshProGameObject.transform.localRotation = transform.localRotation;
+            newTextMeshProGameObject.transform.localScale = transform.localScale;
 
-                TextMeshProUGUI? textMeshPro = newTextMeshProGameObject.AddComponent<TextMeshProUGUI>();
-                textMeshPro.text = oldTextField.text;
-                textMeshPro.font = TMP_FontAsset.CreateFontAsset(oldTextField.font);
-                textMeshPro.fontSize = oldTextField.fontSize;
-                textMeshPro.color = oldTextField.color;
-                textMeshPro.alignment = TextAlignmentOptions.Center;
-                textMeshPro.textWrappingMode = TextWrappingModes.PreserveWhitespace;
-                // Hoping this is enough...
+            TextMeshProUGUI? textMeshPro = newTextMeshProGameObject.AddComponent<TextMeshProUGUI>();
+            textMeshPro.text = oldTextField.text;
+            textMeshPro.font = TMP_FontAsset.CreateFontAsset(oldTextField.font);
+            textMeshPro.fontSize = oldTextField.fontSize;
+            textMeshPro.color = oldTextField.color;
+            textMeshPro.alignment = TextAlignmentOptions.Center;
+            textMeshPro.textWrappingMode = TextWrappingModes.PreserveWhitespace;
 
-                // Replace the field value
-                __instance.m_textWidget = textMeshPro;
+            // Replace the field value
+            __instance.m_textWidget = textMeshPro;
 
-                // Remove the old Text component
-                UnityEngine.Object.Destroy(oldTextField.gameObject);
-            }
-
-            if (oldTextMeshProField != null)
-            {
-                TextMeshProUGUI? currentWidget = __instance.m_textWidget;
-                // Replace the field value
-                __instance.m_textWidget = ZNetScene.instance.GetPrefab("sign").GetComponent<Sign>().m_textWidget;
-                currentWidget.text = oldTextMeshProField.text;
-                currentWidget.text = oldTextMeshProField.text;
-                currentWidget.fontSize = oldTextMeshProField.fontSize;
-                currentWidget.color = oldTextMeshProField.color;
-                currentWidget.alignment = TextAlignmentOptions.Center;
-            }
+            // Remove the old Text component
+            UnityEngine.Object.Destroy(oldTextField.gameObject);
         }
     }
 
