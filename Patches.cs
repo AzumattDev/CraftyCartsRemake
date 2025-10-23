@@ -41,7 +41,7 @@ static class CCR_ChangeContainerInventorySize
 {
     static void Postfix(Container __instance, ref Inventory ___m_inventory)
     {
-        if (__instance.m_nview.GetZDO() == null || !__instance.m_nview.IsValid() || !__instance.Load())
+        if (__instance.m_nview.GetZDO() == null || !__instance.m_nview.IsValid())
             return;
         string cartName = __instance.transform.root.name.Replace("(Clone)", "").Trim();
 
@@ -87,10 +87,7 @@ public class CCR_NoCameraClippingWithCart
 {
     static bool Prefix() => !(Player.m_localPlayer && IsPlayerAttachedToVagon(Player.m_localPlayer));
 
-    internal static bool IsPlayerAttachedToVagon(Character player)
-    {
-        return Vagon.m_instances.Any(vagon => vagon.IsAttached(player));
-    }
+    internal static bool IsPlayerAttachedToVagon(Character player) => Vagon.m_instances.Any(vagon => vagon && vagon.IsAttached(player));
 }
 
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
@@ -112,46 +109,52 @@ static class ZNetSceneAwakePatch
     {
         GameObject? origbench = zns.GetPrefab(originalBench);
         GameObject? newBench = zns.GetPrefab(prefabToFix);
+        if (!origbench || !newBench) return;
+
         CraftyCart? cart = newBench.GetComponent<CraftyCart>();
-        if (origbench != null && newBench != null)
+        if (!cart) return;
+
+        WearNTear? wnt = origbench.GetComponentInChildren<WearNTear>();
+        if (wnt)
         {
-            WearNTear? wnt = origbench.GetComponentInChildren<WearNTear>();
             cart.m_wearNTear.m_destroyedEffect = wnt.m_destroyedEffect;
             cart.m_wearNTear.m_hitEffect = wnt.m_hitEffect;
             cart.m_wearNTear.m_switchEffect = wnt.m_switchEffect;
-            if (cart.m_container != null)
-            {
-                cart.m_container.m_destroyedLootPrefab = zns.GetPrefab("CargoCrate");
-            }
+        }
 
-            CraftingStation? station = origbench.GetComponentInChildren<CraftingStation>();
+        if (cart.m_container)
+            cart.m_container.m_destroyedLootPrefab = zns.GetPrefab("CargoCrate");
 
+        CraftingStation? station = origbench.GetComponentInChildren<CraftingStation>();
+        if (station)
+        {
             cart.m_craftingStation.m_craftItemEffects = station.m_craftItemEffects;
             cart.m_craftingStation.m_craftItemDoneEffects = station.m_craftItemDoneEffects;
             cart.m_craftingStation.m_repairItemDoneEffects = station.m_craftItemEffects;
+        }
 
-            Piece? piece = origbench.GetComponentInChildren<Piece>();
+        Piece? piece = origbench.GetComponentInChildren<Piece>();
+        if (piece)
             cart.m_piece.m_placeEffect = piece.m_placeEffect;
 
-            SmokeSpawner? smokeSpawner = origbench.GetComponentInChildren<SmokeSpawner>();
-            if (cart.m_smokeSpawner != null && smokeSpawner != null)
-                cart.m_smokeSpawner.m_smokePrefab = smokeSpawner.m_smokePrefab;
+        SmokeSpawner? smokeSpawner = origbench.GetComponentInChildren<SmokeSpawner>();
+        if (cart.m_smokeSpawner && smokeSpawner)
+            cart.m_smokeSpawner.m_smokePrefab = smokeSpawner.m_smokePrefab;
 
-            CircleProjector? circleProjector = origbench.GetComponentInChildren<CircleProjector>();
-            if (circleProjector != null && cart.m_projector != null)
-                cart.m_projector.m_prefab = circleProjector.m_prefab;
+        CircleProjector? circleProjector = origbench.GetComponentInChildren<CircleProjector>();
+        if (circleProjector && cart.m_projector)
+            cart.m_projector.m_prefab = circleProjector.m_prefab;
 
-            // Fix the animation controller for the artisan cart.
-            if (prefabToFix == ArtisanCartFabName)
+        // Fix the animation controller for the artisan cart.
+        if (prefabToFix == ArtisanCartFabName)
+        {
+            GameObject? extensionToFix = zns.GetPrefab("artisan_ext1");
+            Animator? animator = extensionToFix.GetComponentInChildren<Animator>();
+            if (animator == null || cart.upgradeVisualsParent.GetChild(0) == null) return;
+            Animator? cartAnimator = cart.upgradeVisualsParent.GetChild(0).GetComponentInChildren<Animator>();
+            if (cartAnimator != null)
             {
-                GameObject? extensionToFix = zns.GetPrefab("artisan_ext1");
-                Animator? animator = extensionToFix.GetComponentInChildren<Animator>();
-                if (animator == null || cart.upgradeVisualsParent.GetChild(0) == null) return;
-                Animator? cartAnimator = cart.upgradeVisualsParent.GetChild(0).GetComponentInChildren<Animator>();
-                if (cartAnimator != null)
-                {
-                    cartAnimator.runtimeAnimatorController = animator.runtimeAnimatorController;
-                }
+                cartAnimator.runtimeAnimatorController = animator.runtimeAnimatorController;
             }
         }
     }
@@ -162,27 +165,16 @@ public static class Vagon_UpdateMass_Patch
 {
     static void Postfix(Vagon __instance)
     {
-        if (__instance.m_container == null) return;
-        if (__instance.m_container.GetInventory() == null) return;
-        if (__instance.m_nview == null) return;
-        if (!__instance.m_nview.IsOwner()) return;
-        float totalWeight = __instance.m_container.GetInventory().GetTotalWeight();
+        Inventory? inv = __instance.m_container ? __instance.m_container.GetInventory() : null;
+        if (inv == null || __instance.m_nview == null || !__instance.m_nview.IsOwner()) return;
 
+        float totalWeight = inv.GetTotalWeight();
 
         // Adjust the center of mass based on the weight
         Vector3 newCenterOfMass = __instance.m_body.centerOfMass;
-        if (totalWeight < 10f)
-        {
-            // Lower the center of mass if the cart is light
-            newCenterOfMass.y = 0.2f;
-        }
-        else
-        {
-            // Adjust center of mass based on weight
-            newCenterOfMass.y = 1f - Mathf.Clamp(totalWeight * 0.05f, 0f, 1f);
-        }
+        // Lower the center of mass if the cart is light or adjust center of mass based on the current weight
+        newCenterOfMass.y = (totalWeight < 10) ? 0.2f : 1f - Mathf.Clamp(totalWeight * 0.05f, 0f, 1f);
 
-        // Apply the new center of mass to the Rigidbody
         __instance.m_body.centerOfMass = newCenterOfMass;
     }
 }
@@ -192,14 +184,12 @@ public static class Vagon_FixedUpdate_Patch
 {
     static void Postfix(Vagon __instance)
     {
-        if (__instance.m_container == null) return;
-        if (__instance.m_container.GetInventory() == null) return;
-        if (__instance.m_body == null) return;
-        if (__instance.m_nview == null) return;
-        if (!__instance.m_nview.IsOwner()) return;
+        var rigidBody = __instance.m_body;
+        var inv = __instance.m_container ? __instance.m_container.GetInventory() : null;
+        if (!rigidBody || inv == null || !__instance.m_nview || !__instance.m_nview.IsOwner()) return;
         // Adjust the angular drag based on the weight
-        float totalWeight = __instance.m_container.GetInventory().GetTotalWeight();
-        __instance.m_body.angularDrag = Mathf.Clamp(0.05f + totalWeight * 0.01f, 0.5f, 5f);
+        float totalWeight = inv.GetTotalWeight();
+        rigidBody.angularDamping = Mathf.Clamp(0.05f + totalWeight * 0.01f, 0.5f, 5f);
     }
 }
 
@@ -210,13 +200,11 @@ public static class CraftingStation_GetExtensionCount_Patch
     {
         // Check if this station is part of a cart by trying to get the CraftyCart component.
         CraftyCart cart = __instance.GetComponentInParent<CraftyCart>();
-        if (cart != null)
-        {
-            // For example, if currentUpgradeLevel is 1 then bonus is 0,
-            // if currentUpgradeLevel is 3 then bonus is 2.
-            int bonusExtensions = Mathf.Max(cart.currentUpgradeLevel - 1, 0);
-            __result += bonusExtensions;
-        }
+        if (!cart) return;
+        // For example, if currentUpgradeLevel is 1 then bonus is 0,
+        // if currentUpgradeLevel is 3 then bonus is 2.
+        int bonusExtensions = Mathf.Max(cart.currentUpgradeLevel - 1, 0);
+        __result += bonusExtensions;
     }
 }
 
@@ -282,7 +270,7 @@ public static class Sign_Awake_Transpiler
     public static ZNetView GetComponentFromSelfOrParent(Component self)
     {
         // If the immediate parent is named "BumperSticker", always get the component from the parent.
-        if (self.transform.parent != null && self.transform.parent.gameObject.name == "BumperSticker")
+        if (self.transform.parent && self.transform.parent.gameObject.name == "BumperSticker")
         {
             // Search the parent's hierarchy for a ZNetView.
             return self.transform.parent.GetComponentInParent<ZNetView>();
@@ -300,42 +288,39 @@ static class SignAwakePatch2
     {
         if (__instance.transform.parent == null || __instance.transform.parent.gameObject.name != "BumperSticker") return;
         Transform? textGameObject = Utils.FindChild(__instance.transform, "Text");
-        if (textGameObject == null) return;
+        if (!textGameObject) return;
         Text? oldTextField = textGameObject.GetComponent<Text>();
-        if (oldTextField != null)
-        {
-            // Create a new GameObject to hold the TextMeshProUGUI component
-            GameObject newTextMeshProGameObject = new GameObject("Text");
-            newTextMeshProGameObject.transform.SetParent(textGameObject.transform.parent);
+        if (!oldTextField) return;
 
-            // Just in case it has a different scale and shit
-            Transform transform = textGameObject.transform;
-            newTextMeshProGameObject.transform.localPosition = transform.localPosition;
-            newTextMeshProGameObject.transform.localRotation = transform.localRotation;
-            newTextMeshProGameObject.transform.localScale = transform.localScale;
+        // Create a new GameObject to hold the TextMeshProUGUI component
+        GameObject newTextMeshProGameObject = new GameObject("Text");
+        newTextMeshProGameObject.transform.SetParent(textGameObject.transform.parent);
 
-            TextMeshProUGUI? textMeshPro = newTextMeshProGameObject.AddComponent<TextMeshProUGUI>();
-            textMeshPro.text = oldTextField.text;
-            textMeshPro.font = TMP_FontAsset.CreateFontAsset(oldTextField.font);
-            textMeshPro.fontSize = oldTextField.fontSize;
-            textMeshPro.color = oldTextField.color;
-            textMeshPro.alignment = TextAlignmentOptions.Center;
-            textMeshPro.textWrappingMode = TextWrappingModes.PreserveWhitespace;
+        // Just in case it has a different scale and shit
+        Transform transform = textGameObject.transform;
+        newTextMeshProGameObject.transform.localPosition = transform.localPosition;
+        newTextMeshProGameObject.transform.localRotation = transform.localRotation;
+        newTextMeshProGameObject.transform.localScale = transform.localScale;
 
-            // Replace the field value
-            __instance.m_textWidget = textMeshPro;
+        TextMeshProUGUI? textMeshPro = newTextMeshProGameObject.AddComponent<TextMeshProUGUI>();
+        textMeshPro.text = oldTextField.text;
+        textMeshPro.font = TMP_FontAsset.CreateFontAsset(oldTextField.font);
+        textMeshPro.fontSize = oldTextField.fontSize;
+        textMeshPro.color = oldTextField.color;
+        textMeshPro.alignment = TextAlignmentOptions.Center;
+        textMeshPro.textWrappingMode = TextWrappingModes.PreserveWhitespace;
 
-            // Remove the old Text component
-            UnityEngine.Object.Destroy(oldTextField.gameObject);
-        }
+        // Replace the field value
+        __instance.m_textWidget = textMeshPro;
+
+        // Remove the old Text component
+        UnityEngine.Object.Destroy(oldTextField.gameObject);
     }
 
     static void Postfix(Sign __instance)
     {
         // Ensure the Sign script remains enabled, when testing, it was disabled for some reason
         if (!__instance.enabled)
-        {
             __instance.enabled = true;
-        }
     }
 }

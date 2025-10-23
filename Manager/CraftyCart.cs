@@ -57,11 +57,11 @@ namespace CraftyCartsRemake
         private void Awake()
         {
             // Auto-assign the ZNetView if not already set.
-            if (m_zNetView == null)
+            if (!m_zNetView)
                 m_zNetView = GetComponent<ZNetView>();
 
             // Register our RPC so that clients can request an upgrade.
-            if (m_zNetView != null)
+            if (m_zNetView)
             {
                 m_zNetView.Register("RPC_SetUpgradeLevel", RPC_SetUpgradeLevel);
             }
@@ -72,7 +72,7 @@ namespace CraftyCartsRemake
             }
 
             // Auto-populate the upgradeVisualMappings from the children of upgradeVisualsParent.
-            if (upgradeVisualsParent != null)
+            if (upgradeVisualsParent)
             {
                 int childCount = upgradeVisualsParent.childCount;
                 upgradeVisualMappings = new UpgradeVisualMapping[childCount];
@@ -130,14 +130,13 @@ namespace CraftyCartsRemake
         {
             if (!m_zNetView.IsOwner())
                 return;
-            if (m_container != null)
+            if (!m_container) return;
+            
+            foreach (UpgradeVisualMapping upgradeVisualMapping in upgradeVisualMappings.Where(x => x.requiredLevel <= currentUpgradeLevel))
             {
-                foreach (UpgradeVisualMapping upgradeVisualMapping in upgradeVisualMappings.Where(x=>x.requiredLevel <= currentUpgradeLevel))
+                foreach (Piece.Requirement requirement in upgradeVisualMapping.m_resources)
                 {
-                    foreach (Piece.Requirement requirement in upgradeVisualMapping.m_resources)
-                    {
-                        m_container.GetInventory().AddItem(requirement.m_resItem.m_itemData.m_dropPrefab, requirement.m_amount);
-                    }
+                    m_container.GetInventory().AddItem(requirement.m_resItem.m_itemData.m_dropPrefab, requirement.m_amount);
                 }
             }
         }
@@ -155,7 +154,7 @@ namespace CraftyCartsRemake
             currentUpgradeLevel = newLevel;
 
             // Optionally update the ZDO to reflect the new level.
-            if (m_zNetView != null && m_zNetView.GetZDO() != null)
+            if (m_zNetView && m_zNetView.GetZDO() != null)
             {
                 m_zNetView.GetZDO().Set(upgradeLevelKey, currentUpgradeLevel);
             }
@@ -175,7 +174,7 @@ namespace CraftyCartsRemake
                 return;
             foreach (UpgradeVisualMapping mapping in upgradeVisualMappings)
             {
-                if (mapping.visualObject != null)
+                if (mapping.visualObject)
                 {
                     // Activate if the current upgrade level is equal to or above the required level.
                     mapping.visualObject.SetActive(currentUpgradeLevel >= mapping.requiredLevel);
@@ -205,7 +204,7 @@ namespace CraftyCartsRemake
         /// <param name="newLevel">The desired new upgrade level.</param>
         public void RequestUpgrade(int newLevel)
         {
-            if (m_zNetView == null)
+            if (!m_zNetView)
                 return;
 
             // If we're not the owner, send an RPC to request the upgrade.

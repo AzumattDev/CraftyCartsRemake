@@ -1,3 +1,6 @@
+### 3.1.2
+- Fix issue with ZenSign
+- While I was viewing it...I updated code to early exit, easier to read, implicit checks for Unity object lifetime are now explicit. Probably didn't do all I could, but I was lazy.
 ### 3.1.10
 - Update ServerSync internally
 ### 3.1.9
